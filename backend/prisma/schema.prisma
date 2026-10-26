@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+
+model Tournament {
+  id String @id @default(cuid())
+  name String
+  status String @default("SETUP")
+  createdAt DateTime @default(now())
+  teams Team[]
+  matches Match[]
+}
+model Team {
+  id String @id @default(cuid())
+  name String
+  seed Int
+  tournamentId String
+  tournament Tournament @relation(fields:[tournamentId], references:[id], onDelete:Cascade)
+  matchesA Match[] @relation("TeamA")
+  matchesB Match[] @relation("TeamB")
+  wins Match[] @relation("Winner")
+  roundsWon Round[] @relation("RoundWinner")
+  @@unique([tournamentId, seed])
+}
+model Match {
+  id String @id @default(cuid())
+  number Int
+  bracketPosition String
+  tournamentId String
+  tournament Tournament @relation(fields:[tournamentId], references:[id], onDelete:Cascade)
+  teamAId String?
+  teamA Team? @relation("TeamA", fields:[teamAId], references:[id])
+  teamBId String?
+  teamB Team? @relation("TeamB", fields:[teamBId], references:[id])
+  teamAScore Int @default(0)
+  teamBScore Int @default(0)
+  winnerId String?
+  winner Team? @relation("Winner", fields:[winnerId], references:[id])
+  status String @default("UPCOMING")
+  nextMatchId String?
+  nextMatchSlot String?
+  rounds Round[]
+  gameState GameState?
+  events GameEvent[]
+  assignments MatchQuestion[]
+  @@unique([tournamentId, number])
+}
+model Question {
+  id String @id @default(cuid())
+  text String
+  category String @default("General")
+  isSample Boolean @default(false)
+  answers Answer[]
+  rounds Round[]
+  assignments MatchQuestion[]
+}
+model Answer {
+  id String @id @default(cuid())
+  questionId String
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  rank Int
+  text String
+  points Int
+  @@unique([questionId, rank])
+}
+model MatchQuestion {
+  id String @id @default(cuid())
+  matchId String
+  match Match @relation(fields:[matchId], references:[id], onDelete:Cascade)
+  questionId String
+  question Question @relation(fields:[questionId], references:[id])
+  order Int
+  @@unique([matchId, order])
+  @@unique([matchId, questionId])
+}
+model Round {
+  id String @id @default(cuid())
+  matchId String
+  match Match @relation(fields:[matchId], references:[id], onDelete:Cascade)
+  number Int
+  questionId String
+  question Question @relation(fields:[questionId], references:[id])
+  roundScore Int @default(0)
+  winnerId String?
+  winner Team? @relation("RoundWinner", fields:[winnerId], references:[id])
+  status String @default("ACTIVE")
+  isTiebreaker Boolean @default(false)
+  @@unique([matchId, number])
+}
+model GameState {
+  id String @id @default(cuid())
+  matchId String @unique
+  match Match @relation(fields:[matchId], references:[id], onDelete:Cascade)
+  roundNumber Int @default(1)
+  phase String @default("NOT_STARTED")
+  buzzerWinner String?
+  firstFaceoffTeam String?
+  firstFaceoffRank Int?
+  faceoffWinner String?
+  controllingTeam String?
+  stealingTeam String?
+  strikes Int @default(0)
+  revealedRanks String @default("[]")
+  roundPoints Int @default(0)
+  paused Boolean @default(false)
+  updatedAt DateTime @updatedAt
+}
+model GameEvent {
+  id String @id @default(cuid())
+  matchId String
+  match Match @relation(fields:[matchId], references:[id], onDelete:Cascade)
+  type String
+  previousState String
+  updatedState String
+  actor String @default("host")
+  createdAt DateTime @default(now())
+}
