@@ -7,7 +7,9 @@
     "build": "npm run build -w frontend && npm run build -w backend",
     "test": "npm run test -w backend",
     "db:push": "npm run db:push -w backend",
-    "db:seed": "npm run db:seed -w backend"
+    "db:seed": "npm run db:seed -w backend",
+    "db:import-questions": "npm run db:import-questions -w backend",
+    "db:upgrade-16": "npm run db:upgrade-16 -w backend"
   },
   "devDependencies": { "concurrently": "^9.1.2" }
 }

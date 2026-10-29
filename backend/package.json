@@ -8,7 +8,9 @@
     "start": "node dist/src/server.js",
     "test": "vitest run",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:import-questions": "tsx prisma/import-question-bank.ts",
+    "db:upgrade-16": "tsx prisma/upgrade-to-16.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",

@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { initialState, transition, type State } from '../src/game-engine/engine.js';
-import { bracketPairs, openingAdvance, nextSlot } from '../src/game-engine/bracket.js';
+import { bracketPairs, nextSlot } from '../src/game-engine/bracket.js';
+import { questionBank, validateQuestionBank } from '../prisma/question-bank.js';
 
-const context = { points: { 1: 35, 2: 25, 3: 15, 4: 10, 5: 7, 6: 5, 7: 3 }, teamAScore: 0, teamBScore: 0 };
+const context = { points: { 1: 35, 2: 25, 3: 15, 4: 10, 5: 7, 6: 5, 7: 3 }, answerCount: 7, teamAScore: 0, teamBScore: 0 };
 const go = (state: State, action: { type: string; rank?: number; side?: 'A' | 'B' }) => transition(state, action, context).state;
 
 describe('tournament engine', () => {
-  it('creates seven opening matches and advances the highest scoring winner by bye', () => {
-    expect(bracketPairs(Array.from({ length: 14 }, (_, i) => ({ id: String(i + 1), seed: i + 1 }))).map(pair => pair.map(team => team.seed))).toEqual([[1, 14], [2, 13], [3, 12], [4, 11], [5, 10], [6, 9], [7, 8]]);
-    const results=Array.from({length:7},(_,i)=>({number:i+1,winnerId:String(i+1),winnerScore:i===3?180:100,winnerSeed:i+1}));
-    expect(openingAdvance(results).bye.winnerId).toBe('4');
-    expect(openingAdvance(results).pairs.map(pair=>pair.map(team=>team.winnerId))).toEqual([['1','7'],['2','6'],['3','5']]);
-    expect(openingAdvance(results.map(result=>({...result,winnerScore:100}))).bye.winnerId).toBe('1');
-    expect(nextSlot(8)).toEqual([11, 'B']);
-    expect(nextSlot(12)).toEqual([13, 'B']);
+  it('creates a complete 16-team knockout bracket without a bye', () => {
+    expect(bracketPairs(Array.from({ length: 16 }, (_, i) => ({ id: String(i + 1), seed: i + 1 }))).map(pair => pair.map(team => team.seed))).toEqual([[1, 16], [2, 15], [3, 14], [4, 13], [5, 12], [6, 11], [7, 10], [8, 9]]);
+    expect(Array.from({ length: 14 }, (_, i) => nextSlot(i + 1))).toEqual([
+      [9, 'A'], [10, 'A'], [11, 'A'], [12, 'A'], [12, 'B'], [11, 'B'], [10, 'B'], [9, 'B'],
+      [13, 'A'], [14, 'A'], [14, 'B'], [13, 'B'], [15, 'A'], [15, 'B'],
+    ]);
+    expect(nextSlot(15)).toBeNull();
   });
 
   it('starts a manual face-off and clears a previously saved pause', () => {
@@ -143,5 +143,37 @@ describe('tournament engine', () => {
     const reviewed = go(go(finished, { type: 'REVIEW' }), { type: 'REVEAL', rank: 2 });
     expect(reviewed.roundPoints).toBe(35);
     expect(reviewed.revealedRanks).toEqual([1, 2]);
+  });
+
+  it('shows every remaining answer after a round or tied match without awarding points', () => {
+    for (const phase of ['ROUND_COMPLETED', 'MATCH_TIED', 'MATCH_COMPLETED'] as const) {
+      const state: State = { ...initialState, phase, roundPoints: 35, revealedRanks: [1] };
+      const result = transition(state, { type: 'REVIEW_ALL' }, context);
+      expect(result.state.revealedRanks).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      expect(result.state.phase).toBe(phase === 'ROUND_COMPLETED' ? 'ANSWER_REVIEW' : phase);
+      expect(result.state.roundPoints).toBe(35);
+      expect(result.award).toBeUndefined();
+    }
+  });
+
+  it('finishes a board after its actual fifth or sixth answer', () => {
+    for (const answerCount of [5, 6]) {
+      const points = Object.fromEntries(Array.from({ length: answerCount }, (_, i) => [i + 1, 20]));
+      const ctx = { points, answerCount, teamAScore: 0, teamBScore: 0 };
+      let state: State = { ...initialState, phase: 'MAIN_GAMEPLAY', controllingTeam: 'A' };
+      for (let rank = 1; rank < answerCount; rank++) {
+        state = transition(state, { type: 'REVEAL', rank }, ctx).state;
+        expect(state.phase).toBe('MAIN_GAMEPLAY');
+      }
+      const finished = transition(state, { type: 'REVEAL', rank: answerCount }, ctx);
+      expect(finished.state.phase).toBe('ROUND_COMPLETED');
+      expect(finished.award).toEqual({ side: 'A', points: answerCount * 20 });
+    }
+  });
+
+  it('transcribes every numbered PDF entry with its five ranked point values', () => {
+    expect(() => validateQuestionBank()).not.toThrow();
+    expect(questionBank.map(question => question.number)).toEqual([...Array.from({ length: 33 }, (_, i) => i + 1), 35, 36, 37]);
+    expect(questionBank.every(question => question.answers.length === 5)).toBe(true);
   });
 });

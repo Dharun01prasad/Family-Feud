@@ -1,7 +1,7 @@
-export type Phase='NOT_STARTED'|'ROUND_READY'|'FACE_OFF_BUZZER'|'FACE_OFF_FIRST_ANSWER'|'FACE_OFF_SECOND_ANSWER'|'PLAY_OR_PASS'|'MAIN_GAMEPLAY'|'STEAL_ATTEMPT'|'ROUND_COMPLETED'|'ANSWER_REVIEW'|'MATCH_COMPLETED';
+export type Phase='NOT_STARTED'|'ROUND_READY'|'FACE_OFF_BUZZER'|'FACE_OFF_FIRST_ANSWER'|'FACE_OFF_SECOND_ANSWER'|'PLAY_OR_PASS'|'MAIN_GAMEPLAY'|'STEAL_ATTEMPT'|'ROUND_COMPLETED'|'ANSWER_REVIEW'|'MATCH_TIED'|'MATCH_COMPLETED';
 export type Side='A'|'B';
 export interface State { roundNumber:number; phase:Phase; buzzerWinner:Side|null; firstFaceoffTeam:Side|null; firstFaceoffRank:number|null; faceoffWinner:Side|null; controllingTeam:Side|null; stealingTeam:Side|null; strikes:number; revealedRanks:number[]; roundPoints:number; passAvailable:boolean; paused:boolean }
-export interface Context { points:Record<number,number>; teamAScore:number; teamBScore:number }
+export interface Context { points:Record<number,number>; answerCount:number; teamAScore:number; teamBScore:number }
 export type Action={type:string; side?:Side; rank?:number};
 export const initialState:State={roundNumber:1,phase:'NOT_STARTED',buzzerWinner:null,firstFaceoffTeam:null,firstFaceoffRank:null,faceoffWinner:null,controllingTeam:null,stealingTeam:null,strikes:0,revealedRanks:[],roundPoints:0,passAvailable:false,paused:false};
 const other=(s:Side):Side=>s==='A'?'B':'A';
@@ -28,7 +28,7 @@ export function transition(s:State,a:Action,c:Context):{state:State;award?:{side
     } else if(s.phase==='STEAL_ATTEMPT'){
       n.phase='ROUND_COMPLETED';
       return{state:n,award:{side:s.stealingTeam!,points:n.roundPoints}};
-    } else if(s.phase==='MAIN_GAMEPLAY'&&n.revealedRanks.length===7){n.phase='ROUND_COMPLETED';return{state:n,award:{side:s.controllingTeam!,points:n.roundPoints}}}
+    } else if(s.phase==='MAIN_GAMEPLAY'&&n.revealedRanks.length===c.answerCount){n.phase='ROUND_COMPLETED';return{state:n,award:{side:s.controllingTeam!,points:n.roundPoints}}}
     return{state:n};
   }
   if(a.type==='WRONG'){
@@ -54,5 +54,10 @@ export function transition(s:State,a:Action,c:Context):{state:State;award?:{side
   if(a.type==='START_STEAL'&&s.phase==='MAIN_GAMEPLAY'){n.stealingTeam=other(s.controllingTeam!);n.phase='STEAL_ATTEMPT';return{state:n}}
   if(a.type==='AWARD'&&s.phase==='MAIN_GAMEPLAY'&&s.controllingTeam){n.phase='ROUND_COMPLETED';return{state:n,award:{side:s.controllingTeam,points:s.roundPoints}}}
   if(a.type==='REVIEW'&&s.phase==='ROUND_COMPLETED'){n.phase='ANSWER_REVIEW';return{state:n}}
+  if(a.type==='REVIEW_ALL'&&['ROUND_COMPLETED','ANSWER_REVIEW','MATCH_TIED','MATCH_COMPLETED'].includes(s.phase)){
+    n.revealedRanks=Object.keys(c.points).map(Number).sort((a,b)=>a-b);
+    if(s.phase==='ROUND_COMPLETED')n.phase='ANSWER_REVIEW';
+    return{state:n};
+  }
   throw Error(`Invalid ${a.type} during ${s.phase}`);
 }
