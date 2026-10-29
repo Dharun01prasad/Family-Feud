@@ -33,5 +33,18 @@
 .help-trigger{position:absolute;top:1.5vh;right:1.4vw;z-index:6;width:35px;height:35px;border:2px solid #c7edff;border-radius:50%;background:#0d55a8;color:#fff;font:800 22px 'Barlow Condensed',sans-serif;box-shadow:0 0 16px #41caff80;cursor:pointer}.help-trigger:hover{background:#1588e7}
 .wrong-flash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,#c20b22a8 0%,#7c001178 28%,transparent 70%)}.wrong-flash span{font:1000 min(55vh,48vw) / 1 Inter,Arial,sans-serif;color:#ff253b;-webkit-text-stroke:clamp(4px,.8vw,14px) #ffb0ad;text-shadow:0 0 18px #fff,0 0 55px #ff0011,0 14px 0 #72040c;filter:drop-shadow(0 0 30px #ff0011)}
 .wrong-flash span{white-space:nowrap;letter-spacing:-.08em}.wrong-flash.count-2 span{font-size:min(43vh,36vw)}.wrong-flash.count-3 span{font-size:min(35vh,28vw)}
+.game-screen .board{height:65vh;border-radius:28px}
+.bracket-page .bracket{grid-template-columns:1.35fr 1fr 1fr .9fr .75fr;gap:22px}
+.bracket-page .bracket-match:after{display:none}
+.bracket-page .round-matches{justify-content:center}
+.bracket-page .bracket-round.r0 .round-matches{gap:10px}
+.bracket-page .bracket-round.r0 .bracket-match{padding:8px}
+.bracket-page .bracket-round.r0 .bracket-match>div{padding:5px 7px}
+.bracket-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.bye-card{border:1px solid #e9b73f;border-radius:10px;background:linear-gradient(#3c330d,#1b2340);padding:15px;color:#fff;text-align:center}
+.bye-card small{display:block;color:#ffd156;font-size:10px;letter-spacing:2px}.bye-card strong{display:block;margin:8px 0;font:800 20px 'Barlow Condensed';text-transform:uppercase}.bye-card span{color:#bed3e9;font-size:11px;line-height:1.4}
+.team-modal{width:min(760px,100%)}.team-modal h2{font:800 30px 'Barlow Condensed';text-transform:uppercase;margin:0}.team-modal p{color:#a8bfd8;font-size:13px;line-height:1.5}.team-name-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}.team-name-grid label{display:grid;gap:5px}.team-name-grid label span{font-size:11px;color:#8bcfff}.team-name-grid input{width:100%;background:#071220;border:1px solid #2b405c;border-radius:7px;padding:10px;color:#fff}
 .game-screen .game-message{background:#07346e;border-color:#42bfff;box-shadow:0 0 16px #20bbff55}
 @media(max-width:800px){.game-screen .board{grid-template-columns:1fr}.cube-front span{width:38px;font-size:23px}.cube-back{font-size:clamp(15px,3vw,26px)}.cube-edge{height:24px}.cube-top{top:-12px}.cube-bottom{bottom:-12px}.help-trigger{top:1vh;right:1vw;width:30px;height:30px;font-size:18px}}
+@media(max-width:1000px){.bracket-page .bracket{grid-template-columns:repeat(5,260px);overflow-x:auto}.bracket-page .page-title{align-items:flex-start;flex-wrap:wrap}}
+@media(max-width:600px){.team-name-grid{grid-template-columns:1fr}.bracket-actions{justify-content:flex-start}.game-screen .board{height:60vh}}

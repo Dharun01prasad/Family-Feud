@@ -33,11 +33,11 @@ const prompts=[
 const points=[35,25,15,10,7,5,3];
 async function main(){await p.gameEvent.deleteMany();await p.gameState.deleteMany();await p.round.deleteMany();await p.matchQuestion.deleteMany();await p.match.deleteMany();await p.answer.deleteMany();await p.question.deleteMany();await p.team.deleteMany();await p.tournament.deleteMany();
  const tournament=await p.tournament.create({data:{name:'Campus Feud Championship',status:'ACTIVE'}});
- const names=['Quantum Crew','Campus Kings','Brainwave','The Mavericks','Quiz Wizards','Nova Squad','Peak Performers','Wildcards'];
- const teams=[];for(let i=0;i<8;i++)teams.push(await p.team.create({data:{name:names[i],seed:i+1,tournamentId:tournament.id}}));
- const questions=[];for(const [text,answers] of prompts)questions.push(await p.question.create({data:{text:text as string,category:'Sample — College Life',isSample:true,answers:{create:(answers as string[]).map((_,i)=>({rank:i+1,text:'Mukunth',points:points[i]}))}}}));
- const pairIdx=[[0,7],[3,4],[1,6],[2,5]];const matches=[];
- for(let n=1;n<=7;n++){const pair=n<=4?pairIdx[n-1]:null;matches.push(await p.match.create({data:{number:n,bracketPosition:n<=4?'QUARTERFINAL':n<=6?'SEMIFINAL':'FINAL',tournamentId:tournament.id,teamAId:pair?teams[pair[0]].id:null,teamBId:pair?teams[pair[1]].id:null}}))}
+ const names=Array.from({length:14},(_,i)=>`Team ${i+1}`);
+ const teams=[];for(let i=0;i<14;i++)teams.push(await p.team.create({data:{name:names[i],seed:i+1,tournamentId:tournament.id}}));
+ const questions=[];for(let i=0;i<39;i++){const [text,answers]=prompts[i%prompts.length];questions.push(await p.question.create({data:{text:i<prompts.length?text as string:`Bonus survey ${i+1}: ${text}`,category:'Sample — College Life',isSample:true,answers:{create:(answers as string[]).map((_,rank)=>({rank:rank+1,text:'Mukunth',points:points[rank]}))}}}))}
+ const matches=[];
+ for(let n=1;n<=13;n++){const pair=n<=7?[teams[n-1],teams[14-n]]:null;matches.push(await p.match.create({data:{number:n,bracketPosition:n<=7?'OPENING':n<=10?'SECOND_ROUND':n<=12?'SEMIFINAL':'FINAL',tournamentId:tournament.id,teamAId:pair?.[0].id,teamBId:pair?.[1].id}}))}
  let qi=0;for(const m of matches){for(let order=1;order<=3;order++)await p.matchQuestion.create({data:{matchId:m.id,questionId:questions[qi++].id,order}});const q=questions[qi-3];await p.round.create({data:{matchId:m.id,number:1,questionId:q.id}});await p.gameState.create({data:{matchId:m.id}})}
  console.log(`Seeded ${teams.length} teams, ${matches.length} matches and ${questions.length} sample questions.`)}
 main().finally(()=>p.$disconnect());

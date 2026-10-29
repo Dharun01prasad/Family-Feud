@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { initialState, transition, type State } from '../src/game-engine/engine.js';
-import { bracketPairs, nextSlot } from '../src/game-engine/bracket.js';
+import { bracketPairs, openingAdvance, nextSlot } from '../src/game-engine/bracket.js';
 
 const context = { points: { 1: 35, 2: 25, 3: 15, 4: 10, 5: 7, 6: 5, 7: 3 }, teamAScore: 0, teamBScore: 0 };
 const go = (state: State, action: { type: string; rank?: number; side?: 'A' | 'B' }) => transition(state, action, context).state;
 
 describe('tournament engine', () => {
-  it('creates the seeded eight-team bracket and advancement slots', () => {
-    expect(bracketPairs(Array.from({ length: 8 }, (_, i) => ({ id: String(i + 1), seed: i + 1 }))).map(pair => pair.map(team => team.seed))).toEqual([[1, 8], [4, 5], [2, 7], [3, 6]]);
-    expect(nextSlot(1)).toEqual([5, 'A']);
-    expect(nextSlot(6)).toEqual([7, 'B']);
+  it('creates seven opening matches and advances the highest scoring winner by bye', () => {
+    expect(bracketPairs(Array.from({ length: 14 }, (_, i) => ({ id: String(i + 1), seed: i + 1 }))).map(pair => pair.map(team => team.seed))).toEqual([[1, 14], [2, 13], [3, 12], [4, 11], [5, 10], [6, 9], [7, 8]]);
+    const results=Array.from({length:7},(_,i)=>({number:i+1,winnerId:String(i+1),winnerScore:i===3?180:100,winnerSeed:i+1}));
+    expect(openingAdvance(results).bye.winnerId).toBe('4');
+    expect(openingAdvance(results).pairs.map(pair=>pair.map(team=>team.winnerId))).toEqual([['1','7'],['2','6'],['3','5']]);
+    expect(openingAdvance(results.map(result=>({...result,winnerScore:100}))).bye.winnerId).toBe('1');
+    expect(nextSlot(8)).toEqual([11, 'B']);
+    expect(nextSlot(12)).toEqual([13, 'B']);
   });
 
   it('starts a manual face-off and clears a previously saved pause', () => {
@@ -39,17 +43,32 @@ describe('tournament engine', () => {
     expect(state.controllingTeam).toBe('A');
   });
 
+  it('allows unlimited face-off strikes and resets them when control is assigned', () => {
+    let state = go(initialState, { type: 'START_ROUND' });
+    for (let i = 0; i < 5; i++) state = go(state, { type: 'WRONG' });
+    expect(state.phase).toBe('FACE_OFF_FIRST_ANSWER');
+    expect(state.strikes).toBe(5);
+    expect(() => go(state, { type: 'ASSIGN_CONTROL', side: 'A' })).toThrow();
+    state = go(state, { type: 'REVEAL', rank: 2 });
+    state = go(state, { type: 'WRONG' });
+    expect(state.strikes).toBe(6);
+    state = go(state, { type: 'ASSIGN_CONTROL', side: 'A' });
+    expect(state.strikes).toBe(0);
+    expect(go(state, { type: 'WRONG' }).phase).toBe('MAIN_GAMEPLAY');
+    expect(go(go(state, { type: 'WRONG' }), { type: 'WRONG' }).phase).toBe('STEAL_ATTEMPT');
+  });
+
   it('accepts a reveal from a saved legacy buzzer phase', () => {
     const state = go({ ...initialState, phase: 'FACE_OFF_BUZZER' }, { type: 'REVEAL', rank: 3 });
     expect(state.phase).toBe('FACE_OFF_SECOND_ANSWER');
     expect(state.roundPoints).toBe(15);
   });
 
-  it('prevents duplicate survey points and enters steal after three wrong answers', () => {
+  it('prevents duplicate survey points and enters steal after two wrong answers', () => {
     let state: State = { ...initialState, phase: 'MAIN_GAMEPLAY', controllingTeam: 'A' };
     state = go(state, { type: 'REVEAL', rank: 1 });
     expect(() => go(state, { type: 'REVEAL', rank: 1 })).toThrow();
-    state = go(go(go(state, { type: 'WRONG' }), { type: 'WRONG' }), { type: 'WRONG' });
+    state = go(go(state, { type: 'WRONG' }), { type: 'WRONG' });
     expect(state.phase).toBe('STEAL_ATTEMPT');
     expect(state.stealingTeam).toBe('B');
   });
@@ -61,7 +80,7 @@ describe('tournament engine', () => {
     state = go(state, { type: 'ASSIGN_CONTROL', side: 'A' });
     state = go(state, { type: 'REVEAL', rank: 1 });
     state = go(state, { type: 'REVEAL', rank: 4 });
-    state = go(go(go(state, { type: 'WRONG' }), { type: 'WRONG' }), { type: 'WRONG' });
+    state = go(go(state, { type: 'WRONG' }), { type: 'WRONG' });
     const result = transition(state, { type: 'REVEAL', rank: 5 }, context);
     expect(result.award).toEqual({ side: 'B', points: 92 });
     expect(result.state.phase).toBe('ROUND_COMPLETED');
@@ -71,8 +90,8 @@ describe('tournament engine', () => {
 
   it('awards the existing bank to the original team when the steal is wrong', () => {
     let state: State = { ...initialState, phase: 'MAIN_GAMEPLAY', controllingTeam: 'A', revealedRanks: [1, 2], roundPoints: 60 };
-    state = go(go(go(state, { type: 'WRONG' }), { type: 'WRONG' }), { type: 'WRONG' });
-    expect(state.strikes).toBe(3);
+    state = go(go(state, { type: 'WRONG' }), { type: 'WRONG' });
+    expect(state.strikes).toBe(2);
     expect(state.phase).toBe('STEAL_ATTEMPT');
     const result = transition(state, { type: 'WRONG' }, context);
     expect(result.award).toEqual({ side: 'A', points: 60 });

@@ -31,9 +31,8 @@ export function transition(s:State,a:Action,c:Context):{state:State;award?:{side
     return{state:n};
   }
   if(a.type==='WRONG'){
-    if(s.phase==='FACE_OFF_BUZZER'||s.phase==='FACE_OFF_FIRST_ANSWER'){n.firstFaceoffRank=99;n.phase='FACE_OFF_SECOND_ANSWER';return{state:n}}
-    if(s.phase==='FACE_OFF_SECOND_ANSWER'){n.phase='PLAY_OR_PASS';return{state:n}}
-    if(s.phase==='MAIN_GAMEPLAY'){n.strikes++;if(n.strikes>=3){n.phase='STEAL_ATTEMPT';n.stealingTeam=other(s.controllingTeam!)}return{state:n}}
+    if(['FACE_OFF_BUZZER','FACE_OFF_FIRST_ANSWER','FACE_OFF_SECOND_ANSWER','PLAY_OR_PASS'].includes(s.phase)){n.strikes++;return{state:n}}
+    if(s.phase==='MAIN_GAMEPLAY'){n.strikes++;if(n.strikes>=2){n.phase='STEAL_ATTEMPT';n.stealingTeam=other(s.controllingTeam!)}return{state:n}}
     if(s.phase==='STEAL_ATTEMPT'){n.phase='ROUND_COMPLETED';return{state:n,award:{side:s.controllingTeam!,points:s.roundPoints}}}
     throw Error('A strike is not valid now');
   }
@@ -41,8 +40,8 @@ export function transition(s:State,a:Action,c:Context):{state:State;award?:{side
     n.controllingTeam=a.type==='PLAY'?s.faceoffWinner:other(s.faceoffWinner!);n.phase='MAIN_GAMEPLAY';return{state:n};
   }
   if(a.type==='ASSIGN_CONTROL'&&a.side&&['FACE_OFF_BUZZER','FACE_OFF_FIRST_ANSWER','FACE_OFF_SECOND_ANSWER','PLAY_OR_PASS'].includes(s.phase)){
-    if(s.revealedRanks.length===0&&s.firstFaceoffRank!==99)throw Error('Reveal the spoken answer or mark it wrong before assigning control');
-    n.faceoffWinner=a.side;n.controllingTeam=a.side;n.phase='MAIN_GAMEPLAY';return{state:n};
+    if(s.revealedRanks.length===0)throw Error('Reveal an answer before assigning control');
+    n.faceoffWinner=a.side;n.controllingTeam=a.side;n.strikes=0;n.phase='MAIN_GAMEPLAY';return{state:n};
   }
   if(a.type==='START_STEAL'&&s.phase==='MAIN_GAMEPLAY'){n.stealingTeam=other(s.controllingTeam!);n.phase='STEAL_ATTEMPT';return{state:n}}
   if(a.type==='AWARD'&&s.phase==='MAIN_GAMEPLAY'&&s.controllingTeam){n.phase='ROUND_COMPLETED';return{state:n,award:{side:s.controllingTeam,points:s.roundPoints}}}
