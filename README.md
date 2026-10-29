@@ -24,7 +24,7 @@ The fresh demo database has 39 placeholder questions: two regular questions per 
 
 1. Open the bracket and click a match whose two teams are assigned. Click **Start round**.
 2. Watch the physical buzzer and take the spoken answer. Check your answer sheet, then click the ranked tile or press `1`–`7` to unveil it. Press `X` for a wrong face-off answer. You can take a second face-off answer before assigning control.
-3. Before assigning control, press `X` as many times as needed for wrong face-off answers. Reveal a correct answer, then press `A` or `L` to give Team A or Team B control. The strike count resets at that point. During play, reveal correct answers by rank and press `X` for wrong answers.
+3. Before assigning control, press `X` as many times as needed for wrong face-off answers. Reveal the correct face-off answer(s), then press `A` or `L` for the winning team. The strike count resets. To play, reveal the next answer. To pass, press `P` immediately after `A` or `L`: the winning team keeps the points of its highest-ranked face-off answer, while the other team plays for the remaining bank.
 4. The first and second wrong answers show `X` and `XX`. After two strikes, the other team gets one steal attempt. Reveal any hidden answer to award the full bank to the stealing team automatically. Press `X` for a failed steal; it awards the bank to the original team.
 5. Press `N` after round one to start round two. After round two, `N` completes the match if one team leads. If scores are equal, it starts a single-question tiebreaker. Another tiebreaker is available if the score remains tied.
 

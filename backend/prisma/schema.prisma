@@ -106,6 +106,7 @@ model GameState {
   strikes Int @default(0)
   revealedRanks String @default("[]")
   roundPoints Int @default(0)
+  passAvailable Boolean @default(false)
   paused Boolean @default(false)
   updatedAt DateTime @updatedAt
 }

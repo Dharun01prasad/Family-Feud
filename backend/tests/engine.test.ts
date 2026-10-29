@@ -73,6 +73,43 @@ describe('tournament engine', () => {
     expect(state.stealingTeam).toBe('B');
   });
 
+  it('locks the winning face-off answer when passing and leaves the other answer in the pot', () => {
+    let state = go(initialState, { type: 'START_ROUND' });
+    state = go(state, { type: 'REVEAL', rank: 3 });
+    state = go(state, { type: 'REVEAL', rank: 2 });
+    state = go(state, { type: 'ASSIGN_CONTROL', side: 'A' });
+    expect(state.passAvailable).toBe(true);
+    const passed = transition(state, { type: 'PASS' }, context);
+    expect(passed.credit).toEqual({ side: 'A', points: 25 });
+    expect(passed.state.controllingTeam).toBe('B');
+    expect(passed.state.roundPoints).toBe(15);
+    expect(passed.state.passAvailable).toBe(false);
+    expect(() => go(passed.state, { type: 'PASS' })).toThrow();
+  });
+
+  it('keeps locked pass points separate from the remaining pot on either steal outcome', () => {
+    let state = go(initialState, { type: 'START_ROUND' });
+    state = go(state, { type: 'REVEAL', rank: 1 });
+    state = go(state, { type: 'ASSIGN_CONTROL', side: 'A' });
+    const passed = transition(state, { type: 'PASS' }, context);
+    expect(passed.credit).toEqual({ side: 'A', points: 35 });
+    state = go(passed.state, { type: 'REVEAL', rank: 2 });
+    expect(state.roundPoints).toBe(25);
+    state = go(go(state, { type: 'WRONG' }), { type: 'WRONG' });
+    expect(state.stealingTeam).toBe('A');
+    expect(transition(state, { type: 'WRONG' }, context).award).toEqual({ side: 'B', points: 25 });
+    expect(transition(state, { type: 'REVEAL', rank: 3 }, context).award).toEqual({ side: 'A', points: 40 });
+  });
+
+  it('only offers pass before the team starts playing the board', () => {
+    let state = go(initialState, { type: 'START_ROUND' });
+    state = go(state, { type: 'REVEAL', rank: 1 });
+    state = go(state, { type: 'ASSIGN_CONTROL', side: 'B' });
+    state = go(state, { type: 'REVEAL', rank: 2 });
+    expect(state.passAvailable).toBe(false);
+    expect(() => go(state, { type: 'PASS' })).toThrow();
+  });
+
   it('automatically awards the complete 92-point bank when a steal answer is revealed', () => {
     let state = go(initialState, { type: 'START_ROUND' });
     state = go(state, { type: 'REVEAL', rank: 3 });
