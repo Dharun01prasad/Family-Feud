@@ -1,36 +1,25 @@
 # Feud Night Live
 
-A local, full-stack tournament control system for an eight-team, single-elimination Family Feud-style college event. It includes an audience board, host console, synchronized mobile buzzers, bracket advancement, persistent SQLite state, question management, undo/audit recovery, and tested server-authoritative scoring.
+The app opens on the tournament bracket. Select a match to operate its audience game board from the same computer. The projector screen includes the live controls; a separate host page is not needed.
 
 ## Run on Windows
 
 1. Install Node.js 20 or newer.
-2. From this folder, run `npm install`.
-3. Copy `.env.example` to `.env` (the defaults work locally).
-4. Run `npm run db:push` and then `npm run db:seed`.
-5. Run `npm run dev`.
-6. Open `http://localhost:5173` on the host laptop.
+2. Run `npm install` in this folder.
+3. Copy `.env.example` to `backend/.env` or use the existing local defaults.
+4. Run `npm run db:push` and `npm run db:seed`.
+5. Run `npm run dev` and open `http://localhost:5173`.
 
-For phones on the same Wi-Fi, replace `localhost` with the host computer's IPv4 address. The app prints the network URL when it starts. Windows Firewall may ask you to permit Node.js on private networks.
+For other devices on the same Wi-Fi, use the host computer's local network address.
 
-## Event routes
+## Using the game board
 
-- `/` — tournament dashboard
-- `/bracket` — audience-friendly live bracket
-- `/game/:matchId` — projector game board
-- `/host/match/:matchId` — authenticated host controls
-- `/buzzer/:matchId/team-a` and `/buzzer/:matchId/team-b` — mobile buzzers
-- `/admin` — question library and setup status
+1. Open the bracket and click a match whose two teams are assigned. Click **Start round**.
+2. Watch the physical buzzer and take the spoken answer. Check your answer sheet, then click the ranked tile or press `1`–`7` to unveil it. Press `X` for a wrong face-off answer. You can take a second face-off answer before assigning control.
+3. Press `A` or `L` to give Team A or Team B control. During play, reveal correct answers by rank and press `X` for wrong answers. A large X appears on the audience screen.
+4. The first, second, and third wrong answers show `X`, `XX`, and `XXX`. After three strikes, the other team gets one steal attempt. Reveal any hidden answer to award the full bank to the stealing team automatically. Press `X` for a failed steal; it awards the bank to the original team.
+5. Press `N` after the round is awarded. After round three, `N` completes the match or begins a tiebreaker when tied.
 
-The development host token is `college-feud-host`. Change `HOST_TOKEN` before the event, then set the same value in browser local storage under `feud-host-token`.
+The projected board has only the Start button, answer tiles, and `?`. The `?` key or button opens the full shortcut guide. `W` awards the round bank early, `R` reveals remaining answers after a round, `Z` undoes the last action, `Space` pauses or resumes, and `Esc` returns to the bracket (or closes help).
 
-## Host shortcuts
-
-`1–7` reveal answers, `X` records an incorrect answer, `Z` undoes, `B` resets buzzers, `A`/`L` simulate team buzzers, and `Space` pauses/resumes. Shortcuts do not fire while typing in a field.
-
-## Quality checks
-
-- `npm test` — gameplay and bracket unit tests, including the required 92-point steal scenario
-- `npm run build` — type-checks and builds both applications
-
-All included survey content is labelled sample data and should be replaced or reviewed by the organizer before the event.
+The default local host token is `college-feud-host`. Sample questions are labelled in the database and should be reviewed before the event.

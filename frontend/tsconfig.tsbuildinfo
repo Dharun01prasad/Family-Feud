@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/pages/admin.tsx","./src/pages/bracket.tsx","./src/pages/buzzer.tsx","./src/pages/dashboard.tsx","./src/pages/gamescreen.tsx","./src/pages/host.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/pages/bracket.tsx","./src/pages/gamescreen.tsx"],"version":"5.9.3"}
